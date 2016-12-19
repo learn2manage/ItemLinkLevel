@@ -8,9 +8,10 @@ local tooltip
 function filter(self, event, message, user, ...)
 	for itemLink in message:gmatch("|%x+|Hitem:.-|h.-|h|r") do
 		local itemName, _, _, _, _, itemType, itemSubType, _, itemEquipLoc, _, _, itemClassId, itemSubClassId = GetItemInfo(itemLink)
+		-- Handling equipment items
 		if (itemClassId == LE_ITEM_CLASS_WEAPON or itemClassId == LE_ITEM_CLASS_GEM or itemClassId == LE_ITEM_CLASS_ARMOR) then
 			local itemString = string.match(itemLink, "item[%-?%d:]+")
-			local _, _, color = string.find(itemLink, "|?c?f?f?(%x*)|?H?([^:]*):?(%d+):?(%d*):?(%d*):?(%d*):?(%d*):?(%d*):?(%-?%d*):?(%-?%d*):?(%d*):?(%d*):?(%-?%d*)|?h?%[?([^%[%]]*)%]?|?h?|?r?")
+			local _, _, color, Ltype, itemID = string.find(itemLink, "|?c?f?f?(%x*)|?H?([^:]*):?(%d+):?(%d*):?(%d*):?(%d*):?(%d*):?(%d*):?(%-?%d*):?(%-?%d*):?(%d*):?(%d*):?(%-?%d*)|?h?%[?([^%[%]]*)%]?|?h?|?r?")
 			local iLevel = PLH_GetRealILVL(itemLink)
 			
 			local attrs = {}
@@ -33,12 +34,33 @@ function filter(self, event, message, user, ...)
 			end
 			if (SavedData.show_equiploc and itemEquipLoc ~= nil and _G[itemEquipLoc] ~= nil) then table.insert(attrs, _G[itemEquipLoc]) end
 			if (SavedData.show_ilevel and iLevel ~= nil) then table.insert(attrs, iLevel) end
+			if (itemID ~= nil) then table.insert(attrs, itemID) end
 			
 			local newItemName = itemName.." ("..table.concat(attrs, " ")..")"
 			local newLink = "|cff"..color.."|H"..itemString.."|h["..newItemName.."]|h|r"
 			
 			message = string.gsub(message, escapeSearchString(itemLink), newLink)
+		-- Handling other items to show item ID
+		else
+			local itemString = string.match(itemLink, "item[%-?%d:]+")
+			local _, _, color, Ltype, itemID = string.find(itemLink, "|?c?f?f?(%x*)|?H?([^:]*):?(%d+):?(%d*):?(%d*):?(%d*):?(%d*):?(%d*):?(%-?%d*):?(%-?%d*):?(%d*):?(%d*):?(%-?%d*)|?h?%[?([^%[%]]*)%]?|?h?|?r?")
+			
+			local newItemName = itemName.." ("..itemID..")"
+			local newLink = "|cff"..color.."|H"..itemString.."|h["..newItemName.."]|h|r"
+			
+			message = string.gsub(message, escapeSearchString(itemLink), newLink)
 		end
+	end
+	
+	-- Handling Quest Links to show Quest ID, problem for quest name with ":" (e.g. 31891) not solved yet
+	for questLink in message:gmatch("|%x+|Hquest:.-|h.-|h|r") do
+		local questString = string.match(questLink, "quest[%-?%d:]+")
+		local _, _, color, questType, questID, questLevel, questName = string.find(questLink, "|?c?f?f?(%x*)|?H?([^:]*):?(%d+):?(%d*)|?h?%[?([^%[%]]*)%]?|?h?|?r?")
+		
+		local newQuestName = questName.."("..questID..")"
+		local newQuestLink = "|cff"..color.."|H"..questString.."|h["..newQuestName.."]|h|r"
+		
+		message = string.gsub(message, escapeSearchString(questLink), newQuestLink)
 	end
 	return false, message, user, ...
 end
