@@ -40,22 +40,27 @@ function filter(self, event, message, user, ...)
 			local newLink = "|cff"..color.."|H"..itemString.."|h["..newItemName.."]|h|r"
 			
 			message = string.gsub(message, escapeSearchString(itemLink), newLink)
-		-- Handling other items to show item ID
+		
 		else
-			local itemString = string.match(itemLink, "item[%-?%d:]+")
-			local _, _, color, Ltype, itemID = string.find(itemLink, "|?c?f?f?(%x*)|?H?([^:]*):?(%d+):?(%d*):?(%d*):?(%d*):?(%d*):?(%d*):?(%-?%d*):?(%-?%d*):?(%d*):?(%d*):?(%-?%d*)|?h?%[?([^%[%]]*)%]?|?h?|?r?")
-			
-			local newItemName = itemName.." ("..itemID..")"
-			local newLink = "|cff"..color.."|H"..itemString.."|h["..newItemName.."]|h|r"
-			
-			message = string.gsub(message, escapeSearchString(itemLink), newLink)
+		    -- Handling other items to show item ID
+			-- do nothing for Keystones, let Angry Keystones handle it.
+			-- LE_ITEM_CLASS_REAGENT = 5, SubClassID 1 is Keystone
+			if (itemClassID ~= 5 and itemSubClassId ~= 1) then
+				local itemString = string.match(itemLink, "item[%-?%d:]+")
+				local _, _, color, Ltype, itemID = string.find(itemLink, "|?c?f?f?(%x*)|?H?([^:]*):?(%d+):?(%d*):?(%d*):?(%d*):?(%d*):?(%d*):?(%-?%d*):?(%-?%d*):?(%d*):?(%d*):?(%-?%d*)|?h?%[?([^%[%]]*)%]?|?h?|?r?")
+				
+				local newItemName = itemName.." ("..itemID..")"
+				local newLink = "|cff"..color.."|H"..itemString.."|h["..newItemName.."]|h|r"
+				
+				message = string.gsub(message, escapeSearchString(itemLink), newLink)
+			end 
 		end
 	end
 	
-	-- Handling Quest Links to show Quest ID, problem for quest name with ":" (e.g. 31891) not solved yet
+	-- Handling Quest Links to show Quest ID
 	for questLink in message:gmatch("|%x+|Hquest:.-|h.-|h|r") do
 		local questString = string.match(questLink, "quest[%-?%d:]+")
-		local _, _, color, questType, questID, questLevel, questName = string.find(questLink, "|?c?f?f?(%x*)|?H?([^:]*):?(%d+):?(%d*)|?h?%[?([^%[%]]*)%]?|?h?|?r?")
+		local _, _, color, questType, questID, questLevel, questName = string.find(questLink, "|?c?f?f?(%x*)|?H?([^:]*):?(%d+):?-?(%d*)|?h?%[?([^%[%]]*)%]?|?h?|?r?")
 		
 		local newQuestName = questName.."("..questID..")"
 		local newQuestLink = "|cff"..color.."|H"..questString.."|h["..newQuestName.."]|h|r"
